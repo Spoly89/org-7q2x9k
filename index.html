@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Cache-bust the HTML itself on every cold open, then load once. -->
+<script>
+(function(){
+  try {
+    var u = new URL(window.location.href);
+    if (!u.searchParams.get("v")) {
+      u.searchParams.set("v", Date.now().toString());
+      window.location.replace(u.toString());
+    }
+  } catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#111827">
+<!-- PWA / iOS home-screen -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Org">
+<title>Org</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f6f7f9; color: #1a1a1a; font-size: 15px;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+header {
+  padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+  background: #fff; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10;
+}
+.titlerow { display: flex; align-items: baseline; gap: 10px; }
+header h1 { font-size: 20px; margin: 0; font-weight: 680; }
+.updated { font-size: 12px; color: #9ca3af; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+.chip {
+  padding: 6px 13px; border-radius: 999px; border: 1px solid #d1d5db; background: #fff;
+  cursor: pointer; font-size: 13px; color: #374151; display: inline-flex; align-items: center; gap: 6px;
+}
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+.chip.active { background: #111827; color: #fff; border-color: #111827; }
+.board { padding: 14px 16px 28px; display: flex; flex-direction: column; gap: 16px; }
+.col { background: #eef0f3; border-radius: 12px; padding: 10px 10px 4px; }
+.col-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 10px; }
+.col-head h2 { font-size: 12px; margin: 0; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; font-weight: 700; }
+.count { background: #d7dbe0; color: #4b5563; border-radius: 999px; padding: 1px 8px; font-size: 12px; }
+.card {
+  background: #fff; border-radius: 10px; padding: 11px 13px; margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06); border-left: 3px solid #ccc;
+}
+.card .title { font-weight: 550; line-height: 1.35; word-break: break-word; }
+.card .meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.tag { font-size: 11px; padding: 2px 9px; border-radius: 999px; color: #fff; font-weight: 600; }
+.due { font-size: 12px; color: #6b7280; }
+.due.overdue { color: #dc2626; font-weight: 600; }
+.due.today { color: #d97706; font-weight: 600; }
+.notes { font-size: 13px; color: #6b7280; margin-top: 6px; line-height: 1.4; word-break: break-word; }
+.empty { color: #9ca3af; font-size: 13px; padding: 4px 6px 10px; }
+.msg { padding: 40px 20px; text-align: center; color: #9ca3af; }
+.footer { text-align: center; color: #b6bcc4; font-size: 11px; padding: 4px 16px 24px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="titlerow"><h1>Org</h1><span class="updated" id="updated"></span></div>
+  <div class="filters" id="filters"></div>
+</header>
+<div class="board" id="board"><div class="msg">Loading…</div></div>
+<div class="footer">Add tasks by telling any Claude project. This view refreshes each time you open it.</div>
+
+<script>
+let data = null;
+let filter = "all";
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function projById(id){ return (data.projects||[]).find(p=>p.id===id) || {name:id,color:"#999"}; }
+
+function dueInfo(due){
+  if(!due) return {text:"",cls:""};
+  const t = todayStr();
+  const d = new Date(due+"T00:00:00");
+  const label = d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  if(due < t) return {text:"Overdue · "+label, cls:"overdue"};
+  if(due === t) return {text:"Today", cls:"today"};
+  return {text:label, cls:""};
+}
+
+function renderFilters(){
+  const el = document.getElementById("filters");
+  const opts = [{id:"all",name:"All",color:"#111827"}, ...(data.projects||[])];
+  el.innerHTML = "";
+  opts.forEach(o=>{
+    const b = document.createElement("button");
+    b.className = "chip" + (filter===o.id?" active":"");
+    b.innerHTML = (o.id==="all"?"":`<span class="dot" style="background:${o.color}"></span>`) + o.name;
+    b.onclick = ()=>{ filter=o.id; render(); };
+    el.appendChild(b);
+  });
+}
+
+function cardEl(t){
+  const p = projById(t.project);
+  const di = dueInfo(t.due);
+  const c = document.createElement("div");
+  c.className = "card";
+  c.style.borderLeftColor = p.color;
+  c.innerHTML = `<div class="title"></div>
+    <div class="meta"><span class="tag" style="background:${p.color}"></span>
+    ${di.text?`<span class="due ${di.cls}">${di.text}</span>`:""}</div>
+    ${t.notes?`<div class="notes"></div>`:""}`;
+  c.querySelector(".title").textContent = t.title;
+  c.querySelector(".tag").textContent = p.name;
+  if(t.notes) c.querySelector(".notes").textContent = t.notes;
+  return c;
+}
+
+function render(){
+  renderFilters();
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  (data.columns||[]).forEach(col=>{
+    const tasks = (data.tasks||[]).filter(t=>t.status===col.id && (filter==="all"||t.project===filter));
+    const colEl = document.createElement("div");
+    colEl.className = "col";
+    colEl.innerHTML = `<div class="col-head"><h2>${col.name}</h2><span class="count">${tasks.length}</span></div>`;
+    if(tasks.length===0){
+      const e = document.createElement("div"); e.className="empty"; e.textContent="Nothing here.";
+      colEl.appendChild(e);
+    } else {
+      tasks.forEach(t=>colEl.appendChild(cardEl(t)));
+    }
+    board.appendChild(colEl);
+  });
+  const u = document.getElementById("updated");
+  u.textContent = data.updated ? ("updated "+data.updated) : "";
+}
+
+fetch("tasks.json?v="+Date.now(), {cache:"no-store"})
+  .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+  .then(j=>{ data = j; render(); })
+  .catch(e=>{
+    document.getElementById("board").innerHTML =
+      '<div class="msg">Couldn\'t load tasks.json.<br>If you just set this up, make sure tasks.json is in the repo.</div>';
+  });
+</script>
+</body>
+</html>
