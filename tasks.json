@@ -11,5 +11,6 @@
     { "id": "inprogress", "name": "In Progress" },
     { "id": "done", "name": "Done" }
   ],
-  "tasks": []
+  "tasks": [],
+  "shopping": []
 }
