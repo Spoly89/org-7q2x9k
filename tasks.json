@@ -46,8 +46,8 @@
     {
       "id": "s1784665824873",
       "title": "Eggs",
-      "checked": false,
-      "checkedAt": "",
+      "checked": true,
+      "checkedAt": "2026-07-21",
       "addedOn": "2026-07-21"
     }
   ]
