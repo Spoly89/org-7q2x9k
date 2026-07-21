@@ -108,6 +108,21 @@ header h1 { font-size: 20px; margin: 0; font-weight: 680; }
 .shopitem .stitle { flex: 1; font-size: 16px; word-break: break-word; }
 .shopitem.checked .stitle { text-decoration: line-through; color: #9ca3af; }
 .shophint { color: #9ca3af; font-size: 12px; margin: 2px 2px 14px; }
+/* add-task */
+.addtaskrow { padding: 12px 16px 0; }
+.addtaskbtn { width: 100%; padding: 11px; border: 1px dashed #c3c8cf; background: #fff; border-radius: 10px; color: #4b5563; cursor: pointer; font-size: 15px; font-weight: 600; }
+.addtaskbtn:active { background: #f0f2f5; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: flex-end; justify-content: center; z-index: 50; }
+.overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 16px 16px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); width: 100%; max-width: 640px; box-shadow: 0 -6px 30px rgba(0,0,0,.2); }
+.modal h3 { margin: 0 0 14px; font-size: 17px; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 5px; font-weight: 600; }
+.field input, .field select { width: 100%; padding: 12px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 16px; font-family: inherit; background: #fff; }
+.modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+.modal-actions button { flex: 1; padding: 13px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; border: none; }
+.btn-primary { background: #111827; color: #fff; }
+.btn-ghost { background: #fff; border: 1px solid #d1d5db; color: #374151; }
 </style>
 </head>
 <body>
@@ -120,7 +135,21 @@ header h1 { font-size: 20px; margin: 0; font-weight: 680; }
   <div class="filters" id="filters"></div>
 </header>
 
+<div class="addtaskrow" id="addTaskRow"><button class="addtaskbtn" onclick="openTaskModal()">+ Add task</button></div>
 <div class="board" id="board"><div class="msg">Loading…</div></div>
+
+<div class="overlay" id="taskOverlay">
+  <div class="modal">
+    <h3>Add task</h3>
+    <div class="field"><label>Title</label><input id="tTitle" type="text" placeholder="What needs doing?" autocomplete="off"></div>
+    <div class="field"><label>Project</label><select id="tProject"></select></div>
+    <div class="field"><label>Due date (optional)</label><input id="tDue" type="date"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveTask()">Add</button>
+    </div>
+  </div>
+</div>
 
 <div class="shopwrap" id="shopwrap" style="display:none">
   <div class="addrow">
@@ -142,7 +171,7 @@ let tab = "tasks";
 /* ---- local (phone) state: pending changes that sync back ---- */
 const LS = "org_phone_v1";
 let L = loadLocal();
-function loadLocal(){ try { return Object.assign({addShop:[],shopChecks:{},taskChanges:{}}, JSON.parse(localStorage.getItem(LS)||"{}")); } catch(e){ return {addShop:[],shopChecks:{},taskChanges:{}}; } }
+function loadLocal(){ try { return Object.assign({addShop:[],shopChecks:{},taskChanges:{},addTask:[]}, JSON.parse(localStorage.getItem(LS)||"{}")); } catch(e){ return {addShop:[],shopChecks:{},taskChanges:{},addTask:[]}; } }
 function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(L)); } catch(e){} try { syncSoon(); } catch(e){} }
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -156,6 +185,7 @@ function setTab(t){
   document.getElementById("tabShop").classList.toggle("active", t==="shop");
   document.getElementById("board").style.display = t==="tasks" ? "" : "none";
   document.getElementById("filters").style.display = t==="tasks" ? "" : "none";
+  document.getElementById("addTaskRow").style.display = t==="tasks" ? "" : "none";
   document.getElementById("shopwrap").style.display = t==="shop" ? "" : "none";
   render();
 }
@@ -171,14 +201,49 @@ function dueInfo(due){
 }
 
 /* ---- tasks ---- */
+function allTasks(){
+  const server = (data.tasks||[]).slice();
+  const serverIds = new Set(server.map(t=>t.id));
+  const localAdds = (L.addTask||[]).filter(a=>!serverIds.has(a.id));
+  return server.concat(localAdds);
+}
+function taskById(id){ return allTasks().find(x=>x.id===id); }
 function taskStatus(t){ return (L.taskChanges[t.id] && L.taskChanges[t.id].status) || t.status; }
 function setTaskStatus(id, status){ L.taskChanges[id] = {status:status, at:nowIso()}; saveLocal(); render(); }
-function toggleTaskDone(id){ const t=(data.tasks||[]).find(x=>x.id===id); if(!t)return; setTaskStatus(id, taskStatus(t)==="done" ? "todo" : "done"); }
+function toggleTaskDone(id){ const t=taskById(id); if(!t)return; setTaskStatus(id, taskStatus(t)==="done" ? "todo" : "done"); }
 function advanceTask(id){
-  const t=(data.tasks||[]).find(x=>x.id===id); if(!t)return;
+  const t=taskById(id); if(!t)return;
   const order=(data.columns||[]).map(c=>c.id);
   const i=order.indexOf(taskStatus(t));
   setTaskStatus(id, order[Math.min(i+1, order.length-1)]);
+}
+
+/* add task from phone */
+function openTaskModal(){
+  const sel = document.getElementById("tProject");
+  sel.innerHTML = "";
+  (data.projects||[]).forEach(p=>{ const o=document.createElement("option"); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
+  document.getElementById("tTitle").value = "";
+  document.getElementById("tDue").value = "";
+  if(filter!=="all") sel.value = filter;
+  document.getElementById("taskOverlay").classList.add("show");
+  setTimeout(()=>document.getElementById("tTitle").focus(), 50);
+}
+function closeTaskModal(){ document.getElementById("taskOverlay").classList.remove("show"); }
+function saveTask(){
+  const title = (document.getElementById("tTitle").value||"").trim();
+  if(!title){ document.getElementById("tTitle").focus(); return; }
+  L.addTask.push({
+    id: "t"+Date.now(),
+    project: document.getElementById("tProject").value || (data.projects[0]&&data.projects[0].id),
+    status: "todo",
+    title: title,
+    due: document.getElementById("tDue").value || "",
+    notes: ""
+  });
+  saveLocal();
+  closeTaskModal();
+  render();
 }
 
 function renderFilters(){
@@ -228,8 +293,9 @@ function cardEl(t){
 function renderBoard(){
   const board = document.getElementById("board");
   board.innerHTML = "";
+  const everyTask = allTasks();
   (data.columns||[]).forEach(col=>{
-    const tasks = (data.tasks||[]).filter(t=>taskStatus(t)===col.id && (filter==="all"||t.project===filter));
+    const tasks = everyTask.filter(t=>taskStatus(t)===col.id && (filter==="all"||t.project===filter));
     const colEl = document.createElement("div");
     colEl.className = "col";
     colEl.innerHTML = `<div class="col-head"><h2>${esc(col.name)}</h2><span class="count">${tasks.length}</span></div>`;
@@ -303,6 +369,9 @@ function render(){
 function reconcile(){
   const serverIds = new Set((data.shopping||[]).map(s=>s.id));
   L.addShop = (L.addShop||[]).filter(a=>!serverIds.has(a.id));
+  // drop phone-added tasks the server has now adopted
+  const serverTaskIds = new Set((data.tasks||[]).map(t=>t.id));
+  L.addTask = (L.addTask||[]).filter(a=>!serverTaskIds.has(a.id));
   // prune shopChecks whose item no longer exists anywhere (purged) and matches server checked state
   const allIds = new Set(shopItems().map(i=>i.id));
   Object.keys(L.shopChecks||{}).forEach(id=>{ if(!allIds.has(id)) delete L.shopChecks[id]; });
@@ -320,7 +389,7 @@ var _syncTimer=null;
 function syncNow(){
   if(!SYNC_URL) return;
   try{
-    var payload=JSON.stringify({at:nowIso(), day:todayStr(), addShop:L.addShop, shopChecks:L.shopChecks, taskChanges:L.taskChanges});
+    var payload=JSON.stringify({at:nowIso(), day:todayStr(), addShop:L.addShop, shopChecks:L.shopChecks, taskChanges:L.taskChanges, addTask:L.addTask});
     if(navigator.sendBeacon && navigator.sendBeacon(SYNC_URL,payload)) return;
     fetch(SYNC_URL,{method:"POST",mode:"no-cors",keepalive:true,body:payload}).catch(function(){});
   }catch(e){}
