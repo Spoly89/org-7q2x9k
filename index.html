@@ -42,6 +42,13 @@ header {
 .titlerow { display: flex; align-items: baseline; gap: 10px; }
 header h1 { font-size: 20px; margin: 0; font-weight: 680; }
 .updated { font-size: 12px; color: #9ca3af; }
+/* top-level tabs */
+.tabs { display: flex; gap: 6px; margin-top: 12px; }
+.tab {
+  flex: 1; text-align: center; padding: 8px 0; border-radius: 9px; border: 1px solid #d1d5db;
+  background: #fff; cursor: pointer; font-size: 14px; color: #374151; font-weight: 600;
+}
+.tab.active { background: #111827; color: #fff; border-color: #111827; }
 .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
 .chip {
   padding: 6px 13px; border-radius: 999px; border: 1px solid #d1d5db; background: #fff;
@@ -57,8 +64,11 @@ header h1 { font-size: 20px; margin: 0; font-weight: 680; }
 .card {
   background: #fff; border-radius: 10px; padding: 11px 13px; margin-bottom: 8px;
   box-shadow: 0 1px 2px rgba(0,0,0,.06); border-left: 3px solid #ccc;
+  display: flex; align-items: flex-start; gap: 10px;
 }
+.card .body { flex: 1; min-width: 0; }
 .card .title { font-weight: 550; line-height: 1.35; word-break: break-word; }
+.card.done .title { text-decoration: line-through; color: #9ca3af; }
 .card .meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .tag { font-size: 11px; padding: 2px 9px; border-radius: 999px; color: #fff; font-weight: 600; }
 .due { font-size: 12px; color: #6b7280; }
@@ -68,22 +78,87 @@ header h1 { font-size: 20px; margin: 0; font-weight: 680; }
 .empty { color: #9ca3af; font-size: 13px; padding: 4px 6px 10px; }
 .msg { padding: 40px 20px; text-align: center; color: #9ca3af; }
 .footer { text-align: center; color: #b6bcc4; font-size: 11px; padding: 4px 16px 24px; }
+/* round checkbox */
+.check {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c3c8cf;
+  background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: #fff; margin-top: 1px;
+}
+.check.on { background: #16a34a; border-color: #16a34a; }
+/* advance (move) button */
+.adv {
+  flex: none; border: 1px solid #d1d5db; background: #fff; color: #6b7280; border-radius: 8px;
+  width: 30px; height: 26px; cursor: pointer; font-size: 14px; align-self: center;
+}
+/* shopping */
+.shopwrap { padding: 14px 16px 28px; }
+.addrow { display: flex; gap: 8px; margin-bottom: 14px; }
+.addrow input {
+  flex: 1; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 16px;
+  font-family: inherit; background: #fff;
+}
+.addrow button {
+  padding: 0 18px; border: none; border-radius: 10px; background: #111827; color: #fff;
+  font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.shopitem {
+  display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 10px;
+  padding: 13px 14px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+.shopitem .stitle { flex: 1; font-size: 16px; word-break: break-word; }
+.shopitem.checked .stitle { text-decoration: line-through; color: #9ca3af; }
+.shophint { color: #9ca3af; font-size: 12px; margin: 2px 2px 14px; }
 </style>
 </head>
 <body>
 <header>
   <div class="titlerow"><h1>Org</h1><span class="updated" id="updated"></span></div>
+  <div class="tabs">
+    <div class="tab active" id="tabTasks" onclick="setTab('tasks')">Tasks</div>
+    <div class="tab" id="tabShop" onclick="setTab('shop')">Shopping</div>
+  </div>
   <div class="filters" id="filters"></div>
 </header>
+
 <div class="board" id="board"><div class="msg">Loading…</div></div>
-<div class="footer">Add tasks by telling any Claude project. This view refreshes each time you open it.</div>
+
+<div class="shopwrap" id="shopwrap" style="display:none">
+  <div class="addrow">
+    <input id="shopInput" type="text" placeholder="Add an item…" autocomplete="off"
+           enterkeyhint="done" onkeydown="if(event.key==='Enter')addShop()">
+    <button onclick="addShop()">Add</button>
+  </div>
+  <div class="shophint">Tap the circle to tick off. Ticked items clear by the end of the day.</div>
+  <div id="shoplist"></div>
+</div>
+
+<div class="footer">Tasks come from your Claude projects. Shopping items and tick-offs sync back automatically.</div>
 
 <script>
 let data = null;
 let filter = "all";
+let tab = "tasks";
+
+/* ---- local (phone) state: pending changes that sync back ---- */
+const LS = "org_phone_v1";
+let L = loadLocal();
+function loadLocal(){ try { return Object.assign({addShop:[],shopChecks:{},taskChanges:{}}, JSON.parse(localStorage.getItem(LS)||"{}")); } catch(e){ return {addShop:[],shopChecks:{},taskChanges:{}}; } }
+function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(L)); } catch(e){} try { syncSoon(); } catch(e){} }
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+function nowIso(){ return new Date().toISOString(); }
 function projById(id){ return (data.projects||[]).find(p=>p.id===id) || {name:id,color:"#999"}; }
+function esc(s){ const d=document.createElement("div"); d.textContent=s==null?"":s; return d.innerHTML; }
+
+function setTab(t){
+  tab = t;
+  document.getElementById("tabTasks").classList.toggle("active", t==="tasks");
+  document.getElementById("tabShop").classList.toggle("active", t==="shop");
+  document.getElementById("board").style.display = t==="tasks" ? "" : "none";
+  document.getElementById("filters").style.display = t==="tasks" ? "" : "none";
+  document.getElementById("shopwrap").style.display = t==="shop" ? "" : "none";
+  render();
+}
 
 function dueInfo(due){
   if(!due) return {text:"",cls:""};
@@ -95,6 +170,17 @@ function dueInfo(due){
   return {text:label, cls:""};
 }
 
+/* ---- tasks ---- */
+function taskStatus(t){ return (L.taskChanges[t.id] && L.taskChanges[t.id].status) || t.status; }
+function setTaskStatus(id, status){ L.taskChanges[id] = {status:status, at:nowIso()}; saveLocal(); render(); }
+function toggleTaskDone(id){ const t=(data.tasks||[]).find(x=>x.id===id); if(!t)return; setTaskStatus(id, taskStatus(t)==="done" ? "todo" : "done"); }
+function advanceTask(id){
+  const t=(data.tasks||[]).find(x=>x.id===id); if(!t)return;
+  const order=(data.columns||[]).map(c=>c.id);
+  const i=order.indexOf(taskStatus(t));
+  setTaskStatus(id, order[Math.min(i+1, order.length-1)]);
+}
+
 function renderFilters(){
   const el = document.getElementById("filters");
   const opts = [{id:"all",name:"All",color:"#111827"}, ...(data.projects||[])];
@@ -102,7 +188,7 @@ function renderFilters(){
   opts.forEach(o=>{
     const b = document.createElement("button");
     b.className = "chip" + (filter===o.id?" active":"");
-    b.innerHTML = (o.id==="all"?"":`<span class="dot" style="background:${o.color}"></span>`) + o.name;
+    b.innerHTML = (o.id==="all"?"":`<span class="dot" style="background:${o.color}"></span>`) + esc(o.name);
     b.onclick = ()=>{ filter=o.id; render(); };
     el.appendChild(b);
   });
@@ -111,28 +197,42 @@ function renderFilters(){
 function cardEl(t){
   const p = projById(t.project);
   const di = dueInfo(t.due);
+  const st = taskStatus(t);
   const c = document.createElement("div");
-  c.className = "card";
+  c.className = "card" + (st==="done"?" done":"");
   c.style.borderLeftColor = p.color;
-  c.innerHTML = `<div class="title"></div>
+  const check = document.createElement("div");
+  check.className = "check" + (st==="done"?" on":"");
+  check.innerHTML = st==="done" ? "✓" : "";
+  check.onclick = ()=>toggleTaskDone(t.id);
+  const body = document.createElement("div");
+  body.className = "body";
+  body.innerHTML = `<div class="title"></div>
     <div class="meta"><span class="tag" style="background:${p.color}"></span>
     ${di.text?`<span class="due ${di.cls}">${di.text}</span>`:""}</div>
     ${t.notes?`<div class="notes"></div>`:""}`;
-  c.querySelector(".title").textContent = t.title;
-  c.querySelector(".tag").textContent = p.name;
-  if(t.notes) c.querySelector(".notes").textContent = t.notes;
+  body.querySelector(".title").textContent = t.title;
+  body.querySelector(".tag").textContent = p.name;
+  if(t.notes) body.querySelector(".notes").textContent = t.notes;
+  c.appendChild(check);
+  c.appendChild(body);
+  if(st!=="done"){
+    const adv = document.createElement("button");
+    adv.className="adv"; adv.innerHTML="›"; adv.title="Move to next column";
+    adv.onclick=()=>advanceTask(t.id);
+    c.appendChild(adv);
+  }
   return c;
 }
 
-function render(){
-  renderFilters();
+function renderBoard(){
   const board = document.getElementById("board");
   board.innerHTML = "";
   (data.columns||[]).forEach(col=>{
-    const tasks = (data.tasks||[]).filter(t=>t.status===col.id && (filter==="all"||t.project===filter));
+    const tasks = (data.tasks||[]).filter(t=>taskStatus(t)===col.id && (filter==="all"||t.project===filter));
     const colEl = document.createElement("div");
     colEl.className = "col";
-    colEl.innerHTML = `<div class="col-head"><h2>${col.name}</h2><span class="count">${tasks.length}</span></div>`;
+    colEl.innerHTML = `<div class="col-head"><h2>${esc(col.name)}</h2><span class="count">${tasks.length}</span></div>`;
     if(tasks.length===0){
       const e = document.createElement("div"); e.className="empty"; e.textContent="Nothing here.";
       colEl.appendChild(e);
@@ -141,13 +241,97 @@ function render(){
     }
     board.appendChild(colEl);
   });
+}
+
+/* ---- shopping ---- */
+function shopChecked(item){ const c=L.shopChecks[item.id]; return c ? !!c.checked : !!item.checked; }
+function shopItems(){
+  const server = (data.shopping||[]).slice();
+  const serverIds = new Set(server.map(s=>s.id));
+  const localAdds = (L.addShop||[]).filter(a=>!serverIds.has(a.id));
+  return server.concat(localAdds);
+}
+function addShop(){
+  const inp = document.getElementById("shopInput");
+  const v = (inp.value||"").trim();
+  if(!v) return;
+  L.addShop.push({ id:"s"+Date.now(), title:v, addedOn:todayStr() });
+  saveLocal();
+  inp.value="";
+  render();
+}
+function toggleShop(id){
+  const cur = (function(){ const it=shopItems().find(x=>x.id===id); return it?shopChecked(it):false; })();
+  L.shopChecks[id] = { checked: !cur, at: nowIso() };
+  saveLocal();
+  render();
+}
+function renderShop(){
+  const el = document.getElementById("shoplist");
+  el.innerHTML = "";
+  const items = shopItems().map(it=>({it, checked:shopChecked(it)}));
+  items.sort((a,b)=> (a.checked===b.checked) ? 0 : (a.checked?1:-1));
+  if(items.length===0){
+    el.innerHTML = '<div class="empty">List is empty. Add something above.</div>';
+    return;
+  }
+  items.forEach(({it,checked})=>{
+    const row = document.createElement("div");
+    row.className = "shopitem" + (checked?" checked":"");
+    const ck = document.createElement("div");
+    ck.className = "check" + (checked?" on":"");
+    ck.innerHTML = checked ? "✓" : "";
+    ck.onclick = ()=>toggleShop(it.id);
+    const title = document.createElement("div");
+    title.className = "stitle";
+    title.textContent = it.title;
+    row.appendChild(ck);
+    row.appendChild(title);
+    el.appendChild(row);
+  });
+}
+
+function render(){
+  if(!data) return;
+  if(tab==="tasks"){ renderFilters(); renderBoard(); }
+  else { renderShop(); }
   const u = document.getElementById("updated");
   u.textContent = data.updated ? ("updated "+data.updated) : "";
 }
 
+/* Once the server reflects a local change, drop it from local pending state so it isn't re-sent. */
+function reconcile(){
+  const serverIds = new Set((data.shopping||[]).map(s=>s.id));
+  L.addShop = (L.addShop||[]).filter(a=>!serverIds.has(a.id));
+  // prune shopChecks whose item no longer exists anywhere (purged) and matches server checked state
+  const allIds = new Set(shopItems().map(i=>i.id));
+  Object.keys(L.shopChecks||{}).forEach(id=>{ if(!allIds.has(id)) delete L.shopChecks[id]; });
+  // prune taskChanges the server already agrees with
+  Object.keys(L.taskChanges||{}).forEach(id=>{
+    const t=(data.tasks||[]).find(x=>x.id===id);
+    if(!t || t.status===L.taskChanges[id].status) delete L.taskChanges[id];
+  });
+  try { localStorage.setItem(LS, JSON.stringify(L)); } catch(e){}
+}
+
+/* ---- auto-sync: phone changes -> Google Drive via Apps Script (no button) ---- */
+var SYNC_URL="";  // PHONE copy: real Org Apps Script /exec URL gets spliced in here — do not blank
+var _syncTimer=null;
+function syncNow(){
+  if(!SYNC_URL) return;
+  try{
+    var payload=JSON.stringify({at:nowIso(), day:todayStr(), addShop:L.addShop, shopChecks:L.shopChecks, taskChanges:L.taskChanges});
+    if(navigator.sendBeacon && navigator.sendBeacon(SYNC_URL,payload)) return;
+    fetch(SYNC_URL,{method:"POST",mode:"no-cors",keepalive:true,body:payload}).catch(function(){});
+  }catch(e){}
+}
+function syncSoon(){ if(!SYNC_URL) return; clearTimeout(_syncTimer); _syncTimer=setTimeout(syncNow,4000); }
+document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") syncNow(); });
+window.addEventListener("pagehide",syncNow);
+
 fetch("tasks.json?v="+Date.now(), {cache:"no-store"})
   .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
-  .then(j=>{ data = j; render(); })
+  .then(j=>{ data = j; reconcile(); render(); setTimeout(syncNow,2500); })
   .catch(e=>{
     document.getElementById("board").innerHTML =
       '<div class="msg">Couldn\'t load tasks.json.<br>If you just set this up, make sure tasks.json is in the repo.</div>';
