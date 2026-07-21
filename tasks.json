@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-07-16",
+  "updated": "2026-07-21",
   "projects": [
     { "id": "caq", "name": "CAQ (Work)", "color": "#2563eb" },
     { "id": "personal", "name": "Personal", "color": "#16a34a" },
@@ -11,10 +11,5 @@
     { "id": "inprogress", "name": "In Progress" },
     { "id": "done", "name": "Done" }
   ],
-  "tasks": [
-    { "id": "t1", "title": "Example: draft CAQ status update", "project": "caq", "status": "todo", "due": "2026-07-17", "notes": "Replace me with a real task." },
-    { "id": "t2", "title": "Example: book dentist appointment", "project": "personal", "status": "todo", "due": "", "notes": "" },
-    { "id": "t3", "title": "Example: review July budget", "project": "finance", "status": "inprogress", "due": "2026-07-16", "notes": "" },
-    { "id": "t4", "title": "Example: set up the Org dashboard", "project": "personal", "status": "done", "due": "", "notes": "In progress!" }
-  ]
+  "tasks": []
 }
