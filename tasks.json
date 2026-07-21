@@ -2,15 +2,53 @@
   "version": 1,
   "updated": "2026-07-21",
   "projects": [
-    { "id": "caq", "name": "CAQ (Work)", "color": "#2563eb" },
-    { "id": "personal", "name": "Personal", "color": "#16a34a" },
-    { "id": "finance", "name": "Finance", "color": "#d97706" }
+    {
+      "id": "caq",
+      "name": "CAQ (Work)",
+      "color": "#2563eb"
+    },
+    {
+      "id": "personal",
+      "name": "Personal",
+      "color": "#16a34a"
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "color": "#d97706"
+    }
   ],
   "columns": [
-    { "id": "todo", "name": "To Do" },
-    { "id": "inprogress", "name": "In Progress" },
-    { "id": "done", "name": "Done" }
+    {
+      "id": "todo",
+      "name": "To Do"
+    },
+    {
+      "id": "inprogress",
+      "name": "In Progress"
+    },
+    {
+      "id": "done",
+      "name": "Done"
+    }
   ],
-  "tasks": [],
-  "shopping": []
+  "tasks": [
+    {
+      "id": "t1784666271260",
+      "project": "personal",
+      "status": "todo",
+      "title": "Call Plumber",
+      "due": "2026-07-24",
+      "notes": ""
+    }
+  ],
+  "shopping": [
+    {
+      "id": "s1784665824873",
+      "title": "Eggs",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-07-21"
+    }
+  ]
 }
