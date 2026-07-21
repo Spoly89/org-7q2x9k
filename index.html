@@ -315,7 +315,7 @@ function reconcile(){
 }
 
 /* ---- auto-sync: phone changes -> Google Drive via Apps Script (no button) ---- */
-var SYNC_URL="";  // PHONE copy: real Org Apps Script /exec URL gets spliced in here — do not blank
+var SYNC_URL="https://script.google.com/macros/s/AKfycbwMhClUHLBQXnHEGREH-F9ZpwbzpLsIN20KqVw4x_KMkHnlGfTgXaTSmhS6O-LDgOO2/exec";  // PHONE copy: real Org Apps Script /exec URL — do not blank
 var _syncTimer=null;
 function syncNow(){
   if(!SYNC_URL) return;
