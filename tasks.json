@@ -11,5 +11,8 @@
     { "id": "inprogress", "name": "In Progress" },
     { "id": "done", "name": "Done" }
   ],
-  "tasks": []
+  "tasks": [
+    { "id": "t1753120800000", "project": "caq", "status": "todo", "title": "Prepare the board meeting agenda", "due": "2026-07-22", "notes": "" },
+    { "id": "t1784660461210", "project": "finance", "status": "todo", "title": "Reconcile Q2 expense report", "due": "2026-07-31", "notes": "" }
+  ]
 }
