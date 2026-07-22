@@ -36,7 +36,7 @@
     {
       "id": "t1784666271260",
       "project": "personal",
-      "status": "todo",
+      "status": "done",
       "title": "Call Plumber",
       "due": "2026-07-24",
       "notes": ""
@@ -46,9 +46,30 @@
     {
       "id": "s1784665824873",
       "title": "Eggs",
-      "checked": true,
-      "checkedAt": "2026-07-21",
+      "checked": false,
+      "checkedAt": "",
       "addedOn": "2026-07-21"
+    },
+    {
+      "id": "s1784682006379",
+      "title": "Lappen",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-07-22"
+    },
+    {
+      "id": "s1784682035995",
+      "title": "Apple",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-07-22"
+    },
+    {
+      "id": "s1784682049440",
+      "title": "Oatmilk",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-07-22"
     }
   ]
 }
