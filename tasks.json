@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-07-22",
+  "updated": "2026-07-23",
   "projects": [
     {
       "id": "caq",
@@ -48,6 +48,14 @@
       "title": "Visa Application (Sascha)",
       "due": "",
       "notes": ""
+    },
+    {
+      "id": "t1784839167033",
+      "project": "caq",
+      "status": "todo",
+      "title": "Draft Eric email after Heraeus kickoff, then Vorabinfo to Bookings",
+      "due": "2026-07-24",
+      "notes": "After the Jul 24 Heraeus kickoff, email Eric with the planned workshop dates and count (approx 3 half-day sessions). That email is the basis for the Vorabinfo to bookings@caq.net for the workshops. Kickoff itself is courtesy, not billed, and the half hour rolls into the workshop project."
     }
   ],
   "shopping": [
