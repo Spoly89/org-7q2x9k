@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-07-21",
+  "updated": "2026-07-22",
   "projects": [
     {
       "id": "caq",
@@ -39,6 +39,14 @@
       "status": "done",
       "title": "Call Plumber",
       "due": "2026-07-24",
+      "notes": ""
+    },
+    {
+      "id": "t1784766302363",
+      "project": "personal",
+      "status": "todo",
+      "title": "Visa Application (Sascha)",
+      "due": "",
       "notes": ""
     }
   ],
