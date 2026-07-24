@@ -123,6 +123,7 @@ header h1 { font-size: 20px; margin: 0; font-weight: 680; }
 .modal-actions button { flex: 1; padding: 13px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; border: none; }
 .btn-primary { background: #111827; color: #fff; }
 .btn-ghost { background: #fff; border: 1px solid #d1d5db; color: #374151; }
+.btn-danger { width: 100%; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; background: #fff; border: 1px solid #fca5a5; color: #dc2626; margin-bottom: 10px; }
 </style>
 </head>
 <body>
@@ -140,13 +141,15 @@ header h1 { font-size: 20px; margin: 0; font-weight: 680; }
 
 <div class="overlay" id="taskOverlay">
   <div class="modal">
-    <h3>Add task</h3>
+    <h3 id="modalTitle">Add task</h3>
     <div class="field"><label>Title</label><input id="tTitle" type="text" placeholder="What needs doing?" autocomplete="off"></div>
     <div class="field"><label>Project</label><select id="tProject"></select></div>
     <div class="field"><label>Due date (optional)</label><input id="tDue" type="date"></div>
+    <div class="field"><label>Notes (optional)</label><input id="tNotes" type="text" autocomplete="off"></div>
+    <button class="btn-danger" id="deleteBtn" style="display:none" onclick="deleteTask()">Delete task</button>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeTaskModal()">Cancel</button>
-      <button class="btn-primary" onclick="saveTask()">Add</button>
+      <button class="btn-primary" id="modalSave" onclick="saveTask()">Add</button>
     </div>
   </div>
 </div>
@@ -171,7 +174,7 @@ let tab = "tasks";
 /* ---- local (phone) state: pending changes that sync back ---- */
 const LS = "org_phone_v1";
 let L = loadLocal();
-function loadLocal(){ try { return Object.assign({addShop:[],shopChecks:{},taskChanges:{},addTask:[]}, JSON.parse(localStorage.getItem(LS)||"{}")); } catch(e){ return {addShop:[],shopChecks:{},taskChanges:{},addTask:[]}; } }
+function loadLocal(){ try { return Object.assign({addShop:[],shopChecks:{},taskChanges:{},addTask:[],taskEdits:{},taskDeletes:{}}, JSON.parse(localStorage.getItem(LS)||"{}")); } catch(e){ return {addShop:[],shopChecks:{},taskChanges:{},addTask:[],taskEdits:{},taskDeletes:{}}; } }
 function saveLocal(){ try { localStorage.setItem(LS, JSON.stringify(L)); } catch(e){} try { syncSoon(); } catch(e){} }
 
 function todayStr(){ return new Date().toISOString().slice(0,10); }
@@ -205,7 +208,12 @@ function allTasks(){
   const server = (data.tasks||[]).slice();
   const serverIds = new Set(server.map(t=>t.id));
   const localAdds = (L.addTask||[]).filter(a=>!serverIds.has(a.id));
-  return server.concat(localAdds);
+  return server.concat(localAdds)
+    .filter(t=>!(L.taskDeletes||{})[t.id])
+    .map(t=>{
+      const e=(L.taskEdits||{})[t.id];
+      return e ? Object.assign({}, t, {title:e.title, project:e.project, due:e.due, notes:e.notes}) : t;
+    });
 }
 function taskById(id){ return allTasks().find(x=>x.id===id); }
 function taskStatus(t){ return (L.taskChanges[t.id] && L.taskChanges[t.id].status) || t.status; }
@@ -218,29 +226,50 @@ function advanceTask(id){
   setTaskStatus(id, order[Math.min(i+1, order.length-1)]);
 }
 
-/* add task from phone */
-function openTaskModal(){
+/* add / edit task from phone */
+let editingId = null;
+function openTaskModal(id){
+  editingId = id || null;
+  const t = editingId ? taskById(editingId) : null;
   const sel = document.getElementById("tProject");
   sel.innerHTML = "";
   (data.projects||[]).forEach(p=>{ const o=document.createElement("option"); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
-  document.getElementById("tTitle").value = "";
-  document.getElementById("tDue").value = "";
-  if(filter!=="all") sel.value = filter;
+  document.getElementById("tTitle").value = t ? t.title : "";
+  document.getElementById("tDue").value = t ? (t.due||"") : "";
+  document.getElementById("tNotes").value = t ? (t.notes||"") : "";
+  if(t) sel.value = t.project; else if(filter!=="all") sel.value = filter;
+  document.getElementById("modalTitle").textContent = t ? "Edit task" : "Add task";
+  document.getElementById("modalSave").textContent = t ? "Save" : "Add";
+  document.getElementById("deleteBtn").style.display = t ? "" : "none";
   document.getElementById("taskOverlay").classList.add("show");
-  setTimeout(()=>document.getElementById("tTitle").focus(), 50);
+  if(!t) setTimeout(()=>document.getElementById("tTitle").focus(), 50);
 }
-function closeTaskModal(){ document.getElementById("taskOverlay").classList.remove("show"); }
+function closeTaskModal(){ editingId = null; document.getElementById("taskOverlay").classList.remove("show"); }
 function saveTask(){
   const title = (document.getElementById("tTitle").value||"").trim();
   if(!title){ document.getElementById("tTitle").focus(); return; }
-  L.addTask.push({
-    id: "t"+Date.now(),
-    project: document.getElementById("tProject").value || (data.projects[0]&&data.projects[0].id),
-    status: "todo",
-    title: title,
-    due: document.getElementById("tDue").value || "",
-    notes: ""
-  });
+  const project = document.getElementById("tProject").value || (data.projects[0]&&data.projects[0].id);
+  const due = document.getElementById("tDue").value || "";
+  const notes = (document.getElementById("tNotes").value||"").trim();
+  if(editingId){
+    L.taskEdits[editingId] = {title:title, project:project, due:due, notes:notes, at:nowIso()};
+    const la = (L.addTask||[]).find(a=>a.id===editingId);
+    if(la){ la.title=title; la.project=project; la.due=due; la.notes=notes; }
+  } else {
+    L.addTask.push({ id:"t"+Date.now(), project:project, status:"todo", title:title, due:due, notes:notes });
+  }
+  saveLocal();
+  closeTaskModal();
+  render();
+}
+function deleteTask(){
+  if(!editingId) return;
+  if(!confirm("Delete this task?")) return;
+  const id = editingId;
+  L.taskDeletes[id] = {at:nowIso()};
+  L.addTask = (L.addTask||[]).filter(a=>a.id!==id);
+  delete L.taskChanges[id];
+  delete L.taskEdits[id];
   saveLocal();
   closeTaskModal();
   render();
@@ -272,6 +301,8 @@ function cardEl(t){
   check.onclick = ()=>toggleTaskDone(t.id);
   const body = document.createElement("div");
   body.className = "body";
+  body.style.cursor = "pointer";
+  body.onclick = ()=>openTaskModal(t.id);
   body.innerHTML = `<div class="title"></div>
     <div class="meta"><span class="tag" style="background:${p.color}"></span>
     ${di.text?`<span class="due ${di.cls}">${di.text}</span>`:""}</div>
@@ -380,6 +411,18 @@ function reconcile(){
     const t=(data.tasks||[]).find(x=>x.id===id);
     if(!t || t.status===L.taskChanges[id].status) delete L.taskChanges[id];
   });
+  // prune taskEdits the server already reflects (or whose task is gone with no pending local add)
+  Object.keys(L.taskEdits||{}).forEach(id=>{
+    const e=L.taskEdits[id];
+    const t=(data.tasks||[]).find(x=>x.id===id);
+    if(t){
+      if(t.title===e.title && t.project===e.project && (t.due||"")===(e.due||"") && (t.notes||"")===(e.notes||"")) delete L.taskEdits[id];
+    } else if(!(L.addTask||[]).some(a=>a.id===id)){
+      delete L.taskEdits[id];
+    }
+  });
+  // prune taskDeletes once the server no longer has the task
+  Object.keys(L.taskDeletes||{}).forEach(id=>{ if(!serverTaskIds.has(id)) delete L.taskDeletes[id]; });
   try { localStorage.setItem(LS, JSON.stringify(L)); } catch(e){}
 }
 
@@ -389,7 +432,7 @@ var _syncTimer=null;
 function syncNow(){
   if(!SYNC_URL) return;
   try{
-    var payload=JSON.stringify({at:nowIso(), day:todayStr(), addShop:L.addShop, shopChecks:L.shopChecks, taskChanges:L.taskChanges, addTask:L.addTask});
+    var payload=JSON.stringify({at:nowIso(), day:todayStr(), addShop:L.addShop, shopChecks:L.shopChecks, taskChanges:L.taskChanges, addTask:L.addTask, taskEdits:L.taskEdits, taskDeletes:L.taskDeletes});
     if(navigator.sendBeacon && navigator.sendBeacon(SYNC_URL,payload)) return;
     fetch(SYNC_URL,{method:"POST",mode:"no-cors",keepalive:true,body:payload}).catch(function(){});
   }catch(e){}
