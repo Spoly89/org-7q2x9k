@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-07-23",
+  "updated": "2026-07-24",
   "projects": [
     {
       "id": "caq",
@@ -56,28 +56,36 @@
       "title": "Draft Eric email after Heraeus kickoff, then Vorabinfo to Bookings",
       "due": "2026-07-24",
       "notes": "After the Jul 24 Heraeus kickoff, email Eric with the planned workshop dates and count (approx 3 half-day sessions). That email is the basis for the Vorabinfo to bookings@caq.net for the workshops. Kickoff itself is courtesy, not billed, and the half hour rolls into the workshop project."
+    },
+    {
+      "id": "t1784918878158",
+      "project": "personal",
+      "status": "todo",
+      "title": "Cuddle Sascha (incl Knutschi)",
+      "due": "",
+      "notes": ""
     }
   ],
   "shopping": [
     {
       "id": "s1784665824873",
       "title": "Eggs",
-      "checked": false,
-      "checkedAt": "",
+      "checked": true,
+      "checkedAt": "2026-07-24",
       "addedOn": "2026-07-21"
     },
     {
       "id": "s1784682006379",
       "title": "Lappen",
-      "checked": false,
-      "checkedAt": "",
+      "checked": true,
+      "checkedAt": "2026-07-24",
       "addedOn": "2026-07-22"
     },
     {
       "id": "s1784682035995",
       "title": "Apple",
-      "checked": false,
-      "checkedAt": "",
+      "checked": true,
+      "checkedAt": "2026-07-24",
       "addedOn": "2026-07-22"
     },
     {
