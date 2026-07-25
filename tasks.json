@@ -72,6 +72,14 @@
       "title": "Clean gutters",
       "due": "",
       "notes": ""
+    },
+    {
+      "id": "t1784945635187",
+      "project": "personal",
+      "status": "todo",
+      "title": "Sprudelwasser",
+      "due": "",
+      "notes": ""
     }
   ],
   "shopping": [
@@ -102,6 +110,13 @@
       "checked": false,
       "checkedAt": "",
       "addedOn": "2026-07-22"
+    },
+    {
+      "id": "s1784945645131",
+      "title": "Sprudelwasser",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-07-25"
     }
   ]
 }
