@@ -34,18 +34,10 @@
   ],
   "tasks": [
     {
-      "id": "t1784666271260",
-      "project": "personal",
-      "status": "done",
-      "title": "Call Plumber",
-      "due": "2026-07-24",
-      "notes": ""
-    },
-    {
       "id": "t1784766302363",
       "project": "personal",
       "status": "todo",
-      "title": "Visa Application (Sascha)",
+      "title": "Sign & Fedex Visa Application (Sascha)",
       "due": "",
       "notes": ""
     },
