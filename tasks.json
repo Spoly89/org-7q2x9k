@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-07-24",
+  "updated": "2026-07-25",
   "projects": [
     {
       "id": "caq",
@@ -83,27 +83,6 @@
     }
   ],
   "shopping": [
-    {
-      "id": "s1784665824873",
-      "title": "Eggs",
-      "checked": true,
-      "checkedAt": "2026-07-24",
-      "addedOn": "2026-07-21"
-    },
-    {
-      "id": "s1784682006379",
-      "title": "Lappen",
-      "checked": true,
-      "checkedAt": "2026-07-24",
-      "addedOn": "2026-07-22"
-    },
-    {
-      "id": "s1784682035995",
-      "title": "Apple",
-      "checked": true,
-      "checkedAt": "2026-07-24",
-      "addedOn": "2026-07-22"
-    },
     {
       "id": "s1784682049440",
       "title": "Oatmilk",
