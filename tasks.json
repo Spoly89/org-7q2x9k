@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-07",
+  "updated": "2026-08-08",
   "projects": [
     {
       "id": "caq",
@@ -60,7 +60,7 @@
     {
       "id": "t1784928886589",
       "project": "personal",
-      "status": "todo",
+      "status": "done",
       "title": "Clean gutters",
       "due": "",
       "notes": ""
@@ -85,8 +85,8 @@
     {
       "id": "s1784945645131",
       "title": "Sprudelwasser",
-      "checked": false,
-      "checkedAt": "",
+      "checked": true,
+      "checkedAt": "2026-08-08",
       "addedOn": "2026-07-25"
     }
   ]
