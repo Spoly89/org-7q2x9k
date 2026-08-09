@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-08",
+  "updated": "2026-08-09",
   "projects": [
     {
       "id": "caq",
@@ -81,13 +81,6 @@
       "checked": false,
       "checkedAt": "",
       "addedOn": "2026-07-22"
-    },
-    {
-      "id": "s1784945645131",
-      "title": "Sprudelwasser",
-      "checked": true,
-      "checkedAt": "2026-08-08",
-      "addedOn": "2026-07-25"
     }
   ]
 }
