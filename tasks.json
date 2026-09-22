@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-08-09",
+  "updated": "2026-09-21",
   "projects": [
     {
       "id": "caq",
@@ -78,9 +78,30 @@
     {
       "id": "s1784682049440",
       "title": "Oatmilk",
-      "checked": false,
-      "checkedAt": "",
+      "checked": true,
+      "checkedAt": "2026-09-21",
       "addedOn": "2026-07-22"
+    },
+    {
+      "id": "s1790023937359",
+      "title": "Avocado",
+      "checked": true,
+      "checkedAt": "2026-09-21",
+      "addedOn": "2026-09-21"
+    },
+    {
+      "id": "s1790023941200",
+      "title": "Apple",
+      "checked": true,
+      "checkedAt": "2026-09-21",
+      "addedOn": "2026-09-21"
+    },
+    {
+      "id": "s1790023944831",
+      "title": "Eggs",
+      "checked": true,
+      "checkedAt": "2026-09-21",
+      "addedOn": "2026-09-21"
     }
   ]
 }
