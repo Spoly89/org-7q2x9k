@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-09-22",
+  "updated": "2026-11-09",
   "projects": [
     {
       "id": "caq",
@@ -74,5 +74,20 @@
       "notes": ""
     }
   ],
-  "shopping": []
+  "shopping": [
+    {
+      "id": "s1794236054479",
+      "title": "Egg",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-11-09"
+    },
+    {
+      "id": "s1794236062697",
+      "title": "Wrap",
+      "checked": false,
+      "checkedAt": "",
+      "addedOn": "2026-11-09"
+    }
+  ]
 }
