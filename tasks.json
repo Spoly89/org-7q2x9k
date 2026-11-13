@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-12",
+  "updated": "2026-11-13",
   "projects": [
     {
       "id": "caq",
@@ -75,20 +75,6 @@
     }
   ],
   "shopping": [
-    {
-      "id": "s1794236054479",
-      "title": "Egg",
-      "checked": true,
-      "checkedAt": "2026-11-12",
-      "addedOn": "2026-11-09"
-    },
-    {
-      "id": "s1794236062697",
-      "title": "Wrap",
-      "checked": true,
-      "checkedAt": "2026-11-12",
-      "addedOn": "2026-11-09"
-    },
     {
       "id": "s1794515931661",
       "title": "Senf",
